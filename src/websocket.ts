@@ -1,29 +1,35 @@
+import { WebsocketMessage } from '../universal/types';
+
 export async function connectToServer() {
-  const ws = new WebSocket("ws://localhost:8080/ws");
-  return new Promise<WebSocket>((resolve, reject) => {
-    const timer = setInterval(() => {
-      if (ws.readyState === 1) {
-        clearInterval(timer);
-        resolve(ws);
-      }
-    }, 10);
-  });
+	const ws = new WebSocket('ws://localhost:8080/ws');
+	return new Promise<WebSocket>((resolve) => {
+		const timer = setInterval(() => {
+			if (ws.readyState === 1) {
+				clearInterval(timer);
+				resolve(ws);
+			}
+		}, 10);
+	});
 }
 
-export function getOrCreateCursorFor(messageBody: any) {
-  const sender = messageBody.sender;
-  const existing = document.querySelector(`[data-sender='${sender}']`);
-  if (existing) {
-    return existing;
-  }
+export function getOrCreateCursorFor(messageBody: WebsocketMessage): HTMLElement {
+	const sender = messageBody.sender;
+	const existing = document.querySelector(`[data-sender='${sender}']`) as HTMLElement;
 
-  const template = document.getElementById("cursor");
-  const cursor = (template as any)?.content?.firstElementChild.cloneNode(true);
-  const svgPath = cursor.getElementsByTagName("path")[0];
+	if (existing) {
+		return existing;
+	}
 
-  cursor.setAttribute("data-sender", sender);
-  svgPath.setAttribute("fill", `hsl(${messageBody.color}, 50%, 50%)`);
-  document.body.appendChild(cursor);
+	const template = document.getElementById('cursor') as HTMLTemplateElement;
+	const cursor = template?.content.firstElementChild?.cloneNode(true) as HTMLElement;
+	const svgPath = cursor?.getElementsByTagName('path')[0];
 
-  return cursor;
+	if (sender) {
+		cursor.setAttribute('data-sender', sender);
+	}
+
+	svgPath.setAttribute('fill', `hsl(${messageBody.color}, 50%, 50%)`);
+	document.body.appendChild(cursor);
+
+	return cursor;
 }

@@ -1,38 +1,39 @@
-import { Server, WebSocket } from "ws";
-import { v4 } from "uuid";
+import { Server, WebSocket } from 'ws';
+import { v4 } from 'uuid';
+import { WebsocketMessage } from '../universal/types';
 
 const wss = new Server({ port: 8080 });
 const clients = new Map<
-  WebSocket,
-  {
-    id: string;
-    color: number;
-  }
+	WebSocket,
+	{
+		id: string;
+		color: number;
+	}
 >();
 
-wss.on("connection", (ws) => {
-  const id = v4();
-  const color = Math.floor(Math.random() * 360);
-  const metadata = { id, color };
+wss.on('connection', (ws) => {
+	const id = v4();
+	const color = Math.floor(Math.random() * 360);
+	const metadata = { id, color };
 
-  clients.set(ws, metadata);
-  console.log("connected");
+	clients.set(ws, metadata);
+	console.log('connected');
 
-  ws.on("message", (rawMessage) => {
-    const message = JSON.parse(rawMessage.toString());
-    const metadata = clients.get(ws);
+	ws.on('message', (rawMessage) => {
+		const message: WebsocketMessage = JSON.parse(rawMessage.toString());
+		const metadata = clients.get(ws);
 
-    message.sender = metadata?.id;
-    message.color = metadata?.color;
+		message.sender = metadata?.id;
+		message.color = metadata?.color;
 
-    const outbound = JSON.stringify(message);
+		const outbound = JSON.stringify(message);
 
-    [...clients.keys()].forEach((client) => {
-      client.send(outbound);
-    });
-  });
+		[...clients.keys()].forEach((client) => {
+			client.send(outbound);
+		});
+	});
 
-  ws.on("close", () => {
-    clients.delete(ws);
-  });
+	ws.on('close', () => {
+		clients.delete(ws);
+	});
 });
